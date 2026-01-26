@@ -20,6 +20,17 @@ npm run dev
 
 Abrir: `http://localhost:3000/w/35`
 
+## Deploy bajo /sign-landing
+
+Esta app se publica bajo el subpath `/sign-landing`. Next.js se configura con `basePath` para que los assets se soliciten como `/sign-landing/_next/static/...`.
+
+**Nota de proxy:** el servidor (Nginx/ALB/ingress) debe reenviar tanto:
+
+- `/sign-landing`
+- `/sign-landing/_next/*`
+
+hacia el proceso de Next.js.
+
 ## Pruebas manuales rápidas con User Agents
 
 Puedes simular el comportamiento cambiando el user agent en tu navegador o con cURL:
