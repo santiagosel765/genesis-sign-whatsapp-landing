@@ -1,5 +1,4 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import WhatsappLandingClient from "./WhatsappLandingClient";
 import {
   buildTargetUrl,
@@ -14,7 +13,10 @@ interface PageProps {
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? "";
 
-export default function WhatsappRedirectPage({ params }: PageProps) {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function WhatsappRedirectPage({ params }: PageProps) {
   const cleanId = sanitizeId(params.id);
   const isIdValid = isValidId(cleanId);
 
@@ -38,12 +40,34 @@ export default function WhatsappRedirectPage({ params }: PageProps) {
   }
 
   const targetUrl = buildTargetUrl(BASE_URL, cleanId);
-  const userAgent = headers().get("user-agent") ?? "";
+  const requestHeaders = await headers();
+  const userAgent = requestHeaders.get("user-agent") ?? "";
   const uaContext = getUserAgentContext(userAgent);
 
-  if (!uaContext.isAndroidWhatsAppWebView) {
-    redirect(targetUrl);
+  if (uaContext.isAndroidWhatsAppWebView) {
+    return <WhatsappLandingClient targetUrl={targetUrl} />;
   }
 
-  return <WhatsappLandingClient targetUrl={targetUrl} />;
+  return (
+    <main className="flex min-h-screen items-center justify-center px-6">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
+        <h1 className="text-xl font-semibold text-slate-900">Redirigiendo…</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Si no te redirigimos automáticamente, usa el botón para continuar.
+        </p>
+        <a
+          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          href={targetUrl}
+          rel="noopener noreferrer"
+        >
+          Continuar
+        </a>
+      </div>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.location.replace(${JSON.stringify(targetUrl)});`
+        }}
+      />
+    </main>
+  );
 }
